@@ -49,7 +49,7 @@ class gerber:
 
         buff = readable(string_or_file)
         cmd = buff.readline()
-        while cmd != None:
+        while cmd != '':
             if not self.started:
                 if cmd[:3] in self.params:
                     # keep track of params so that we can make sure the next
@@ -57,14 +57,14 @@ class gerber:
                     self.params[cmd[:3]] = cmd
                 # just pass through the first file
                 self.lines.append(cmd)
-                continue
-            if cmd[:3] in self.params:
-                if self.params[par] != cmd:
+            elif cmd[:3] in self.params:
+                if self.params[cmd[:3]] != cmd:
                     raise Exception('Gerber file parameter clash')
             elif cmd.startswith('%LP'):
                 raise Exception('Gerber level polarity not supported (yet)')
             else:
                 self.lines.append(cmd)
+            cmd = buff.readline()
         self.started = True
         if not self.lines[-1].startswith('M'):
             self.lines.append('M02*\n')
@@ -114,7 +114,7 @@ class sierra:
                 outfile.writestr(name + '.' + outGerb, gerb.asString())
         outfile.close()
 
-if __class__ == __main__:
+if __name__ == '__main__':
     from sys import argv
     from splitargs import splitter, SplitterException
 
@@ -127,7 +127,7 @@ if __class__ == __main__:
         args = argsplit(argv)
     except(SplitterException):
         print usage
-        return
+        exit()
 
     filelist = os.listdir(args['indir'])
     if 'prefix' in args:
