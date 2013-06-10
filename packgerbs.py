@@ -80,8 +80,9 @@ class sierra:
               'GBS': 'botSolder'}
     merges = {'topSolder': ['GTS', 'GM6']}
               
-    def __init__(self, filelist):
-        self.infiles = filelist
+    def __init__(self, gerbfiles, drillfiles):
+        self.infiles = gerbfiles
+        self.drills = drillfiles
 
     def output(self, outfilename, overwrite=False):
         if not outfilename.endswith('.zip'):
@@ -101,7 +102,8 @@ class sierra:
         for ext in self.extMap:
             if ext in infiles:
                 name = infiles[ext]
-                outfile.write(name, fileBase(name) + '.' + self.extMap[ext])
+                outfile.write(name, fileBase(fileName(name)) + '.'
+                                    + self.extMap[ext])
 
         for outGerb, sources in self.merges.items():
             gerb = gerber()
@@ -109,9 +111,11 @@ class sierra:
             for ext in sources:
                 if ext in infiles:
                     gerb.extend(open(infiles[ext]))
-                    name = fileBase(infiles[ext])
+                    name = fileBase(fileName(infiles[ext]))
             if name != '':
                 outfile.writestr(name + '.' + outGerb, gerb.asString())
+        for f in self.drills:
+            outfile.write(f, fileName(f))
         outfile.close()
 
 if __name__ == '__main__':
@@ -120,7 +124,8 @@ if __name__ == '__main__':
 
     argsplit = splitter(['outfile', 'o'],
                         ['prefix', 'p'],
-                        ['indir', ''])
+                        ['indir', ''],
+                        ['drilldir', None])
     argsplit.asLocations(['outfile', 'indir'], base=os.getcwd())
     argsplit.setRequired(['outfile', 'indir'])
     try:
@@ -131,9 +136,10 @@ if __name__ == '__main__':
 
     filelist = os.listdir(args['indir'])
     if 'prefix' in args:
-        filelist = [f for f in filelist if f.startswith(args['prefix'] + '.')]
+        filelist = [f for f in filelist
+                    if fileName(f).startswith(args['prefix'] + '.')]
     # for now, hardcode sierra as the target
-    pack = sierra(filelist)
+    pack = sierra(filelist, args['indir'] or [])
     pack.output(args['outfile'])
 
 usage = '''
