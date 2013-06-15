@@ -4,7 +4,7 @@ import os
 from zipfile import ZipFile
 
 def fileExt(filepath):
-    return filename.rsplit(os.extsep, 1)[-1]
+    return filepath.rsplit(os.extsep, 1)[-1]
 def fileName(filepath):
     return filepath.rsplit(os.sep, 1)[-1]
 def fileBase(filepath):
@@ -119,29 +119,37 @@ class sierra:
         outfile.close()
 
 if __name__ == '__main__':
-    from sys import argv
-    from splitargs import splitter, SplitterException
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-p', '--prefix', help='prefix for design being used')
+    parser.add_argument('--drilldir', help='directory to find drill files')
+    parser.add_argument('-o', '--outfile', help='file to save output to',
+                        required=True)
+    parser.add_argument('indir', help='directory to find the gerber files')
 
-    argsplit = splitter(['outfile', 'o'],
-                        ['prefix', 'p'],
-                        ['indir', ''],
-                        ['drilldir', None])
-    argsplit.asLocations(['outfile', 'indir'], base=os.getcwd())
-    argsplit.setRequired(['outfile', 'indir'])
-    try:
-        args = argsplit(argv)
-    except(SplitterException):
-        print usage
-        exit()
+    args = parser.parse_args()
 
-    filelist = os.listdir(args['indir'])
-    if 'prefix' in args:
-        filelist = [f for f in filelist
-                    if fileName(f).startswith(args['prefix'] + '.')]
+    def directorize(direc):
+        if not direc.endswith(os.sep):
+            return direc + os.sep
+        return direc
+    
+    indir = directorize(args.indir) 
+
+    # TODO this next bit is all shit. Make it less so.
+    gerbfiles = [indir + f for f in os.listdir(indir)]
+    drillfiles = []
+    drilldir = args.drilldir
+    if drilldir is not None:
+        drilldir = directorize(args.drilldir)
+        drillfiles = [drilldir + f for f in os.listdir(drilldir)
+                      if f[-3:] in ('txt', 'TXT')]
+    if args.prefix is not None:
+        gerbfiles = [f for f in filelist
+                    if fileName(f).startswith(args.prefix + '.')]
+        drillfiles = [f for f in drillfiles
+                    if fileName(f).startswith(args.prefix)]
+
     # for now, hardcode sierra as the target
-    pack = sierra(filelist, args['indir'] or [])
-    pack.output(args['outfile'])
-
-usage = '''
-dammit, just use this properly.
-fool.'''
+    pack = sierra(gerbfiles, drillfiles)
+    pack.output(args.outfile)
