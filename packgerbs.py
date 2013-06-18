@@ -72,14 +72,8 @@ class gerber:
     def asString(self):
         return ''.join(self.lines)
 
-class sierra:
-    extMap = {'GTO': 'topSilk',
-              'GBO': 'botSilk',
-              'GTL': 'topCopper',
-              'GBL': 'botCopper',
-              'GBS': 'botSolder'}
-    merges = {'topSolder': ['GTS', 'GM6']}
-              
+class boardfab:
+    extMap, merges = {}, {}
     def __init__(self, gerbfiles, drillfiles):
         self.infiles = gerbfiles
         self.drills = drillfiles
@@ -117,6 +111,18 @@ class sierra:
         for f in self.drills:
             outfile.write(f, fileName(f))
         outfile.close()
+
+class sierra(boardfab):
+    extMap = {'GTO': 'topSilk',
+              'GBO': 'botSilk',
+              'GTL': 'topCopper',
+              'GBL': 'botCopper',
+              'GBS': 'botSolder'}
+    merges = {'topSolder': ['GTS', 'GM6']}
+
+class oshpark(boardfab):
+    extMap = dict([(ext, ext) for ext in 'GTL GBL GTS GBS GTO GBO'.split()]
+                  + [('GM6', 'GKO')])
 
 if __name__ == '__main__':
     import argparse
