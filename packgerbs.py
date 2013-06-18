@@ -129,7 +129,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--prefix', help='prefix for design being used')
     parser.add_argument('--drilldir', help='directory to find drill files')
-    parser.add_argument('-o', '--outfile', help='file to save output to',
+    parser.add_argument('-f', '--force', help='overwrite existing files',
+                        action='store_true')
+    parser.add_argument('-o', '--outdir', help='directory to save outputs to',
                         required=True)
     parser.add_argument('indir', help='directory to find the gerber files')
 
@@ -158,4 +160,6 @@ if __name__ == '__main__':
 
     # for now, hardcode sierra as the target
     pack = sierra(gerbfiles, drillfiles)
-    pack.output(args.outfile)
+    pack.output(directorize(args.outdir) + 'sierra.zip', args.force)
+    pack = oshpark(gerbfiles, drillfiles)
+    pack.output(directorize(args.outdir) + 'oshpark.zip', args.force)
